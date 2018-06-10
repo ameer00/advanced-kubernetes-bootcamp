@@ -180,6 +180,8 @@ Deploy pipeline via JSON
 cd ~/advanced-kubernetes-bootcamp/module-2/spinnaker
 export ZONE_WEST=us-west1-c
 export ZONE_EAST=us-east4-b
+export GKE_EAST=$(gcloud container clusters list --zone us-east4-b --format='value(name)')
+export GKE_WEST=$(gcloud container clusters list --zone us-west1-c --format='value(name)')
 sed -e s/PROJECT/$PROJECT/g -e s/ZONE_WEST/$ZONE_WEST/g -e s/ZONE_EAST/$ZONE_EAST/g -e s/GKE_WEST/$GKE_WEST/g -e s/GKE_EAST/$GKE_EAST/g pipeline.json | curl -d@- -X \
     POST --header "Content-Type: application/json" --header \
         "Accept: /" http://$(kubectl get svc deck-ingress -o jsonpath="{.status.loadBalancer.ingress[*].ip}" --context gke-spinnaker):9000/gate/pipelines
