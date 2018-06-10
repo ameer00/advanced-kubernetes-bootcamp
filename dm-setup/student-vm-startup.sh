@@ -8,7 +8,7 @@ metadata_value() {
 DEPLOYMENT_NAME=`metadata_value "instance/attributes/deployment"`
 
 apt-get update
-apt-get install -y git kubectl
+apt-get install -y git kubectl jq
 
 # Add Bash completion for gcloud
 echo 'source /usr/share/google-cloud-sdk/completion.bash.inc' >> /etc/profile
@@ -57,6 +57,11 @@ EOF
 # Install kctx & kns
 git clone https://github.com/ahmetb/kubectx
 cp kubectx/kube* /usr/local/bin
+
+# Install Docker prerequisites
+apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
 
 # Prometheus resources to install in the clusters
 wget -O prom-rbac.yml https://storage.googleapis.com/stackdriver-prometheus-documentation/rbac-setup.yml
@@ -166,6 +171,12 @@ gcs:
 minio:
   enabled: false
 
+# Configure Deck
+deck:
+  host: 0.0.0.0
+  port: 9000
+  protocol: http
+
 # Configure your Docker registries here
 accounts:
 - name: gcr
@@ -175,4 +186,5 @@ accounts:
   email: 1234@5678.com
 EOF
     helm install -n adv-k8s charts/stable/spinnaker -f spinnaker-config.yaml --timeout 600
+    kubectl expose service adv-k8s-spinnaker-deck --port=9000 --target-port=9000 --name=deck-ingress --type=LoadBalancer
 done

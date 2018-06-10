@@ -22,3 +22,8 @@ echo 'source $HOME/kube-ps1/kube-ps1.sh' >> ~/.bashrc
 export VAR="PS1='[\W \$(kube_ps1)]\$ '"
 echo $VAR >> ~/.bashrc
 source $HOME/.bashrc
+
+# Install Docker
+sudo rm -rf /var/lib/docker
+sudo apt-get -y remove docker docker-engine docker.io
+sudo apt-get update && sudo apt-get install -y docker-ce

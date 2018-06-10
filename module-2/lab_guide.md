@@ -111,12 +111,10 @@ mc-taw-spinnaker-rosco         1         1         1            1           1h
 ```
 Expose the `DECK` (Spinnaker frontend) pod.
 ```
-export DECK_POD=$(kubectl get pods --namespace default -l "component=deck" -o jsonpath="{.items[0].metadata.name}") 
-kubectl port-forward --namespace default $DECK_POD 8080:9000 >> /dev/null &
+export DECK_INGRESS=$(kubectl get svc deck-ingress -o jsonpath="{.status.loadBalancer.ingress[*].ip}" --context gke-spinnaker)
+echo $DECK_INGRESS
 ```
-Access the Spinnaker GUI using the Cloud Shell Preview
-
-<img src="diagrams/cloud-shell-preview.png" width="200"> 
+Access the Spinnaker GUI on this IP address on port 9000.
 
 You get the Spinnaker GUI with the header as shown below
 
@@ -141,10 +139,15 @@ kubectl apply -f ~/advanced-kubernetes-bootcamp/module-2/gke-east
 ## Prepare Container Registry
 > 5 mins
 
-For this workshop, you use a simple webserver to simulate an application.  You can use hightowerlabs `webserver` (which takes an `arg` for index.html explained a bit later in the workshop).  Also, use `busyboxplus` to simulate canary testing during the pipeline deployment.
+For this workshop, you use a simple webserver to simulate an application.  You can use hightowerlabs `webserver` (which takes an `arg` for index.html explained a bit later in the workshop).  Also, use `busyboxplus` to simulate canary testing during the pipeline deployment. First configure Docker for the current user:
 ```
-gcloud docker -- pull gcr.io/hightowerlabs/server:0.0.1
-gcloud docker -- pull radial/busyboxplus
+sudo usermod -aG docker $USER && sudo su - $USER
+gcloud auth configure-docker    
+```
+Pull two Docker images:
+```
+docker pull gcr.io/hightowerlabs/server:0.0.1
+docker pull radial/busyboxplus
 ```
 Define vars with image IDs for the two images
 ```
@@ -155,9 +158,9 @@ export PROJECT=$(gcloud info --format='value(config.project)')
 Tag and push both images to Container Registry
 ```
 docker tag $WEB_IMAGE_ID gcr.io/$PROJECT/web-server:v1.0.0
-gcloud docker -- push gcr.io/$PROJECT/web-server:v1.0.0
+docker push gcr.io/$PROJECT/web-server:v1.0.0
 docker tag $BUSYBOX_IMAGE_ID gcr.io/$PROJECT/busyboxplus
-gcloud docker -- push gcr.io/$PROJECT/busyboxplus
+docker push gcr.io/$PROJECT/busyboxplus
 ```
 Confirm both images are present in Container Registry
 ```
@@ -179,7 +182,7 @@ export ZONE_WEST=us-west1-c
 export ZONE_EAST=us-east4-b
 sed -e s/PROJECT/$PROJECT/g -e s/ZONE_WEST/$ZONE_WEST/g -e s/ZONE_EAST/$ZONE_EAST/g -e s/GKE_WEST/$GKE_WEST/g -e s/GKE_EAST/$GKE_EAST/g pipeline.json | curl -d@- -X \
     POST --header "Content-Type: application/json" --header \
-    "Accept: /" http://localhost:8080/gate/pipelines
+        "Accept: /" http://$(kubectl get svc deck-ingress -o jsonpath="{.status.loadBalancer.ingress[*].ip}" --context gke-spinnaker):9000/gate/pipelines
 ```
 Click on **Pipeline** and click **Configure > Deploy** to inspect it.
 
@@ -305,10 +308,10 @@ After the pipeline completes, click on **Clusters**.  In addition to the single 
 
 You can now update the application by updating the version number from `v1.0.0` to `v1.0.1` in Container Registry.  This simulates application update and triggers the `Deploy` pipeline.
 ```
-gcloud docker -- pull gcr.io/$PROJECT/web-server:v1.0.0
+docker pull gcr.io/$PROJECT/web-server:v1.0.0
 MYAPP_IMAGE_ID=$(docker images gcr.io/$PROJECT/web-server --format "{{.ID}}")
 docker tag $MYAPP_IMAGE_ID gcr.io/$PROJECT/web-server:v1.0.1
-gcloud docker -- push gcr.io/$PROJECT/web-server:v1.0.1
+docker push gcr.io/$PROJECT/web-server:v1.0.1
 ```
 Click on **Pipelines** and refresh the page (if needed).  You see the pipeline being triggered.
 
