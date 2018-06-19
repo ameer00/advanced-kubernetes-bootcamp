@@ -10,11 +10,6 @@ DEPLOYMENT_NAME=`metadata_value "instance/attributes/deployment"`
 apt-get update
 apt-get install -y git kubectl
 
-# Install Docker
-curl -fsSL get.docker.com -o get-docker.sh
-sh get-docker.sh &&
-for user in $(grep '^google-sudoers:' /etc/group | cut -f 4 -d : | awk 'BEGIN { RS= "," } {print}'); do usermod -a -G docker $user;done
-
 # Add Bash completion for gcloud
 echo 'source /usr/share/google-cloud-sdk/completion.bash.inc' >> /etc/profile
 
@@ -70,6 +65,11 @@ echo 'source $HOME/kube-ps1/kube-ps1.sh' >> ~/.bashrc
 export VAR="PS1='[\W \$(kube_ps1)]\$ '"
 echo $VAR >> ~/.bashrc
 source $HOME/.bashrc
+
+# Install Docker
+curl -fsSL get.docker.com -o get-docker.sh
+sh get-docker.sh &&
+for user in $(grep '^google-sudoers:' /etc/group | cut -f 4 -d : | awk 'BEGIN { RS= "," } {print}'); do usermod -a -G docker $user;done
 
 # Prometheus resources to install in the clusters
 wget -O prom-rbac.yml https://storage.googleapis.com/stackdriver-prometheus-documentation/rbac-setup.yml
