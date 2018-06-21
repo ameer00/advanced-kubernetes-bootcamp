@@ -66,11 +66,6 @@ export VAR="PS1='[\W \$(kube_ps1)]\$ '"
 echo $VAR >> ~/.bashrc
 source $HOME/.bashrc
 
-# Install Docker
-curl -fsSL get.docker.com -o get-docker.sh
-sh get-docker.sh
-for user in $(grep '^google-sudoers:' /etc/group | cut -f 4 -d : | awk 'BEGIN { RS= "," } {print}'); do usermod -a -G docker $user;done
-
 # Prometheus resources to install in the clusters
 wget -O prom-rbac.yml https://storage.googleapis.com/stackdriver-prometheus-documentation/rbac-setup.yml
 wget https://storage.googleapis.com/stackdriver-prometheus-documentation/prometheus-service.yml
