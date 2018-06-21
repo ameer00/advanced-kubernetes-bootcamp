@@ -16,6 +16,11 @@ chmod 700 get_helm.sh
 # Install Hey
 go get -u github.com/rakyll/hey
 
+# Install kubectl aliases
+cd $HOME
+wget https://raw.githubusercontent.com/ahmetb/kubectl-alias/master/.kubectl_aliases
+echo "[ -f ~/.kubectl_aliases ] && source ~/.kubectl_aliases" >> $HOME/.bashrc
+
 # Install kube ps1
 git clone https://github.com/jonmosco/kube-ps1.git
 echo 'source $HOME/kube-ps1/kube-ps1.sh' >> ~/.bashrc
